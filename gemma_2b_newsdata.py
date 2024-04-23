@@ -3,11 +3,6 @@ os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"
 from pprint import pprint
 from langchain_community.llms import HuggingFaceEndpoint
 from langchain.prompts import PromptTemplate
-from langchain_community.embeddings.sentence_transformer import (
-    SentenceTransformerEmbeddings,
-)
-from langchain_community.vectorstores import Chroma
-from langchain_text_splitters import CharacterTextSplitter
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from pprint import pprint
@@ -24,8 +19,8 @@ llm = HuggingFaceEndpoint(
 
 from langchain_community.document_loaders import JSONLoader
 loader = JSONLoader(
-    file_path="/content/drive/MyDrive/GSoC_RAG/output.json",
-    jq_schema='.content',
+    file_path="/jsons/2016-01-01_0000_US_CNN_Erin_Burnett_OutFront.json",
+    jq_schema='.content[]',
     text_content=False
 )
 data = loader.load()
@@ -40,18 +35,16 @@ data = loader.load()
 # )
 # data = loader.load()
 
-
-
 pprint(data)
+
+
 # split it into chunks
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
 docs = text_splitter.split_documents(data)
 
 # create the open-source embedding function
-embedding_function = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")# all-MiniLM-L6-v2
+embedding_function = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")  # all-MiniLM-L6-v2
 
-# load it into Chroma
-# db = Chroma.from_documents(docs, embedding_function)
 # create a qdrant collection - a vector based index of all resumes
 qdrant_collection = Qdrant.from_documents(
     docs,
