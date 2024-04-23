@@ -1,0 +1,9 @@
+langchain==0.1.16
+langchain-community==0.0.34
+langchain-core==0.1.45
+langchain-text-splitters==0.0.1
+jq==1.7.0
+sentence-transformers==2.7.0
+sentencepiece==0.1.99
+transformers==4.38.2
+qdrant-client==1.9.0
