@@ -35,8 +35,8 @@ def txt_to_json(txt_path):
             sentence = sentence.strip()
             sentence = sentence.replace("\n", " ")
             sentence = sentence.lower()
-            content.append(sentence)
-        json_data["content"].append("\n\n".join(content))
+            json_data["content"].append(sentence)
+        # json_data["content"].append("\n\n".join(content))
 
 
     json_data = json.dumps(json_data)
@@ -49,7 +49,7 @@ def txt_to_json(txt_path):
 
 if __name__ == "__main__":
 
-    file_path = "/txt/2016-01-01_0000_US_CNN_Erin_Burnett_OutFront.txt"
+    file_path = "./txt/2016-01-01_0000_US_CNN_Erin_Burnett_OutFront.txt"
 
     # pprint(txt_content)
 
