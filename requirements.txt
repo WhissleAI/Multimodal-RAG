@@ -1,0 +1,12 @@
+langchain
+langchain-community
+transformers
+sentence-transformers
+qdrant-client
+beautifulsoup4
+pydantic
+openai
+huggingface-hub
+jq
+pandas
+
