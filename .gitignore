@@ -1,2 +1,4 @@
 out/*
 *.pyc
+*learning.py
+test.txt

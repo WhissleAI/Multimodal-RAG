@@ -1,13 +1,13 @@
 import os
 from langchain_community.llms import HuggingFaceEndpoint
 from langchain.prompts import PromptTemplate
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationalRetrievalChain
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Qdrant
 from langchain_community.document_loaders import JSONLoader
-import torch
+from langchain.chains import LLMChain
+import json
+import time
 
 class ConversationalChainWrapper:
     def __init__(self, repo_id, token, json_file_path, collection_name="resumes"):
@@ -48,28 +48,26 @@ class ConversationalChainWrapper:
         # Construct a retriever on top of the vector store
         self.qdrant_retriever = self.qdrant_collection.as_retriever()
 
-        # Initialize conversation memory
-        self.memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-
         # Create a custom prompt template
-        custom_template = """Given the following conversation and a follow-up question, rephrase the follow-up question to be a standalone question, in its original English.
-                            Chat History:
-                            {chat_history}
-                            Follow-Up Input: {question}
-                            Standalone question:"""
-        self.CUSTOM_QUESTION_PROMPT = PromptTemplate.from_template(custom_template)
+        custom_template = """
+            "role": "user",
+            "content": 
+            "We have provided context information below. \n"
+            "---------------------\n"
+            "{context_str}"
+            "\n---------------------\n"
+            "Given this information, please answer the question: {query}"
+            """
+        self.CUSTOM_QUESTION_PROMPT = PromptTemplate(template=custom_template, input_variables=['context_str', 'query'])
 
-        # Create the conversational retrieval chain
-        self.conversational_chain = ConversationalRetrievalChain.from_llm(
-            llm=self.llm,
-            chain_type="stuff",
-            retriever=self.qdrant_retriever,
-            memory=self.memory,
-            condense_question_prompt=self.CUSTOM_QUESTION_PROMPT
-        )
+        self.llm_chain = LLMChain(prompt=self.CUSTOM_QUESTION_PROMPT, llm=self.llm)
 
-    def invoke(self, question):
-        return self.conversational_chain.invoke({"question": question})
+
+    def invoke(self, query):
+        context = self.qdrant_retriever.invoke(query)
+        context = [c.page_content for c in context]
+        context_str = "\n\n".join(context)
+        return context, self.llm_chain.run(query=query, context_str=context_str)
 
 # Usage
 if __name__ == "__main__":
@@ -78,9 +76,22 @@ if __name__ == "__main__":
     json_file_path = "./jsons/2016-01-01_0000_US_CNN_Erin_Burnett_OutFront.json"
 
     conversational_chain = ConversationalChainWrapper(repo_id, os.environ["HUGGINGFACEHUB_API_TOKEN"], json_file_path)
-    conversational_chain2 = ConversationalChainWrapper(repo_id, os.environ["HUGGINGFACEHUB_API_TOKEN"], json_file_path)
 
-    response = conversational_chain.invoke("What is also called conflict nuts?")
-    print(response)
-    response = conversational_chain2.invoke("Tell me about kim davis")
-    print(response)
+    with open('dataset/format_QAdata.json') as f:
+        json_data = json.load(f)
+
+    questions = json_data['question']
+    for question in questions:
+        context, response = conversational_chain.invoke(question)
+        json_data['contexts'].append(context)
+        json_data['answer'].append(response)
+        # break
+
+    name = "gemma-2b"
+    time = time.strftime("%Y-%m-%d-%H-%M-%S")
+    with open(f"out/{name}-{time}.json", 'a+') as f:
+        json.dump(json_data, f)
+
+
+
+    

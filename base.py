@@ -163,7 +163,7 @@ class BaseConversationalRetrievalChain(Chain):
             if self.rephrase_question:
                 new_inputs["question"] = new_question
             new_inputs["chat_history"] = chat_history_str
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
             answer = self.combine_docs_chain.run(
                 input_documents=docs, callbacks=_run_manager.get_child(), **new_inputs  # news_input:{"question": "audio/path.wav", "history_context": ""}
             )
