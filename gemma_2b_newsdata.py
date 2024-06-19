@@ -7,6 +7,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Qdrant
 from langchain_community.document_loaders import JSONLoader
+import torch
 
 class ConversationalChainWrapper:
     def __init__(self, repo_id, token, json_file_path, collection_name="resumes"):
@@ -14,6 +15,7 @@ class ConversationalChainWrapper:
         self.token = token
         self.json_file_path = json_file_path
         self.collection_name = collection_name
+
 
         # Initialize the LLM
         self.llm = HuggingFaceEndpoint(
@@ -33,7 +35,7 @@ class ConversationalChainWrapper:
         docs = text_splitter.split_documents(data)
 
         # Create the embedding function
-        embedding_function = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
+        embedding_function = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2", model_kwargs = {'device': 'cpu'})
 
         # Create a Qdrant collection
         self.qdrant_collection = Qdrant.from_documents(
