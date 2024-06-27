@@ -43,20 +43,22 @@ class ConversationalChainWrapper:
             ).assign(answer=rag_chain_from_docs)
    
     def init_LLM(self):
-        # self.llm = HuggingFacePipeline.from_model_id(
-        #     model_id=self.repo_id,
-        #     task="text-generation",
-        #     pipeline_kwargs={
-        #         "max_new_tokens": 150,  # to be confirmed 
-        #         "top_k": 20,
-        #         "temperature": 0.7,
-        #         "do_sample": True
-        #     },
-        #     device=0
-        # )
-        self.llm = HuggingFaceEndpoint(
-            repo_id=self.repo_id, max_length=200, temperature=0.7, token=os.environ["HUGGINGFACEHUB_API_TOKEN"]
+        self.llm = HuggingFacePipeline.from_model_id(
+            model_id=self.repo_id,
+            task="text-generation",
+            pipeline_kwargs={
+                "max_new_tokens": 200,  # to be confirmed 
+                "temperature": 0.7,
+                "top_p": 0.95,
+                "repetition_penalty": 1.5,
+                "do_sample": True
+            },
+            device=0,
+            
         )
+        # self.llm = HuggingFaceEndpoint(
+        #     repo_id=self.repo_id, max_length=200, temperature=0.7, token=os.environ["HUGGINGFACEHUB_API_TOKEN"]
+        # )
         print(">>> Successfully initialize LLM!")
 
     def load_context_metadata(self):
@@ -124,15 +126,18 @@ class QuestionsDataset(Dataset):
 # Usage
 if __name__ == "__main__":
     import os
-    os.environ["LANGCHAIN_TRACING_V2"] = "true"
-    os.environ["LANGCHAIN_API_KEY"] = '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'
-    os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"  
+    from dotenv import load_dotenv
+    load_dotenv()
+    langchain_tracing_v2 = os.getenv('LANGCHAIN_TRACING_V2')
+    langchain_api_key = os.getenv('LANGCHAIN_API_KEY')
+    huggingfacehub_api_token = os.getenv('HUGGINGFACEHUB_API_TOKEN')
+
 
     repo_id = "microsoft/Phi-3-mini-4k-instruct"
     # repo_id = "google/gemma-2b"
     context_metadata_filename = "2016_01_english_with_metadata_small.csv"
 
-    conversational_chain = ConversationalChainWrapper(repo_id, os.environ["HUGGINGFACEHUB_API_TOKEN"], context_metadata_filename)
+    conversational_chain = ConversationalChainWrapper(repo_id, huggingfacehub_api_token, context_metadata_filename)
 
     with open('dataset/format_QAdata.json') as f:
         json_data = json.load(f)
