@@ -1,5 +1,6 @@
 import os
 from langchain_huggingface import HuggingFacePipeline
+from langchain_community.llms import HuggingFaceEndpoint
 from langchain import hub
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
@@ -29,20 +30,7 @@ class ConversationalChainWrapper:
         os.environ["LANGCHAIN_TRACING_V2"] = "true"
         os.environ["LANGCHAIN_API_KEY"] = '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'
 
-        custom_template = """
-            "role": "user",
-            "content": 
-            "We have provided context information below. \n"
-            "---------------------\n"
-            "{context}"
-            "\n---------------------\n"
-            "Given this information, please answer the question: {question}"
-            """
-        prompt = PromptTemplate(template=custom_template, input_variables=['context', 'question'])
-
-        # self.llm_chain = LLMChain(prompt=self.CUSTOM_QUESTION_PROMPT, llm=self.llm)
-
-        # prompt = hub.pull("rlm/rag-prompt")
+        prompt = hub.pull("rlm/rag-prompt")
         # import pdb; pdb.set_trace()
         
         def format_docs(docs):
@@ -65,19 +53,22 @@ class ConversationalChainWrapper:
                 | self.llm
                 | StrOutputParser()
             )
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
    
     def init_LLM(self):
-        self.llm = HuggingFacePipeline.from_model_id(
-            model_id=self.repo_id,
-            task="text-generation",
-            pipeline_kwargs={
-                "max_new_tokens": 150,  # to be confirmed 
-                "top_k": 50,
-                "temperature": 0.25,
-                "do_sample": True
-            },
-            device=0
+        # self.llm = HuggingFacePipeline.from_model_id(
+        #     model_id=self.repo_id,
+        #     task="text-generation",
+        #     pipeline_kwargs={
+        #         "max_new_tokens": 150,  # to be confirmed 
+        #         "top_k": 20,
+        #         "temperature": 0.7,
+        #         "do_sample": True
+        #     },
+        #     device=0
+        # )
+        self.llm = HuggingFaceEndpoint(
+            repo_id=self.repo_id, max_length=200, temperature=0.7, token=os.environ["HUGGINGFACEHUB_API_TOKEN"]
         )
         print(">>> Successfully initialize LLM!")
 
@@ -140,10 +131,10 @@ class QuestionsDataset(Dataset):
 # Usage
 if __name__ == "__main__":
     # os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
-    os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"  # new token needed
+    os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"  
     repo_id = "microsoft/Phi-3-mini-4k-instruct"
-    repo_id = "google/gemma-2b"
-    context_metadata_filename = "2016_01_english_with_metadata_small.csv"
+    # repo_id = "google/gemma-2b"
+    context_metadata_filename = "2016_01_english_with_metadata.csv"
 
     conversational_chain = ConversationalChainWrapper(repo_id, os.environ["HUGGINGFACEHUB_API_TOKEN"], context_metadata_filename)
 
