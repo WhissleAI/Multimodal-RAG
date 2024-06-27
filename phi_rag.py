@@ -14,6 +14,7 @@ import json
 import time
 import torch
 from torch.utils.data import Dataset, DataLoader
+import huggingface_hub
 
 class ConversationalChainWrapper:
     def __init__(self, repo_id, token, context_metadata_filename, collection_name="resumes"):
@@ -26,7 +27,14 @@ class ConversationalChainWrapper:
         self.create_vectordb()
         self.init_LLM()
 
-        prompt = hub.pull("rlm/rag-prompt")
+
+
+        prompt = """
+            <|user|>
+            You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n\nQuestion: {question} \n\nContext: {context} \n\nAnswer: <|end|>
+            <|assistant|>
+            """
+        prompt = PromptTemplate(template=prompt, input_variables=['question', 'context'])
         
         def format_docs(docs):
             return "\n\n".join(doc.page_content for doc in docs)
@@ -57,7 +65,7 @@ class ConversationalChainWrapper:
             
         )
         # self.llm = HuggingFaceEndpoint(
-        #     repo_id=self.repo_id, max_length=200, temperature=0.7, token=os.environ["HUGGINGFACEHUB_API_TOKEN"]
+        #     repo_id=self.repo_id, max_length=200, temperature=0.7, token=self.token
         # )
         print(">>> Successfully initialize LLM!")
 
@@ -154,21 +162,27 @@ if __name__ == "__main__":
         'answer': [],
         'contexts': []
     }
-    for batch in data_loader:
-        batch = zip(batch[0], batch[1])
-        for question, ground_truth in batch:
-            result = conversational_chain.rag_chain_with_source.invoke(question)
-            context = [doc.page_content for doc in result['context']]
-            response = result['answer']
-            collected_data['contexts'].append(context)
-            collected_data['answer'].append(response)
-            collected_data['question'].append(question)
-            collected_data['ground_truth'].append(ground_truth)
+    for i, batch in enumerate(data_loader):
+        try:
+            batch = zip(batch[0], batch[1])
+            for question, ground_truth in batch:
+                result = conversational_chain.rag_chain_with_source.invoke(question)
+                context = [doc.page_content for doc in result['context']]
+                response = result['answer']
+                collected_data['contexts'].append(context)
+                collected_data['answer'].append(response)
+                collected_data['question'].append(question)
+                collected_data['ground_truth'].append(ground_truth)
 
-            print(f"    question: {question}\n\n    ground_truth: {ground_truth}\n\n    answer: {response}\n\n    context: {context}\n\n ---end--- \n\n")
-
-        with open(f"out/{name}-{time}.json", 'a+') as f:
-            json.dump(collected_data, f)
+                print(f"    question: {question}\n\n    ground_truth: {ground_truth}\n\n    answer: {response}\n\n    context: {context}\n\n ---end--- \n\n")
+            
+            with open(f"out/{name}-{time}.json", 'a+') as f:
+                json.dump(collected_data, f)
+            print(f"batch {i} finished.")
+            exit()
+        except huggingface_hub.utils._errors.HfHubHTTPError:
+            print(f"batch {i} failed.")
+            
             
 
 
