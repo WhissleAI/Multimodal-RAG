@@ -2,7 +2,7 @@ import os
 from langchain_huggingface import HuggingFacePipeline
 from langchain_community.llms import HuggingFaceEndpoint
 from langchain import hub
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import Qdrant
 from langchain_community.document_loaders import JSONLoader, CSVLoader
@@ -13,6 +13,7 @@ from langchain_core.prompts import PromptTemplate
 import json
 import time
 import torch
+from torch.utils.data import Dataset, DataLoader
 
 class ConversationalChainWrapper:
     def __init__(self, repo_id, token, context_metadata_filename, collection_name="resumes"):
@@ -25,13 +26,7 @@ class ConversationalChainWrapper:
         self.create_vectordb()
         self.init_LLM()
 
-        import os
-
-        os.environ["LANGCHAIN_TRACING_V2"] = "true"
-        os.environ["LANGCHAIN_API_KEY"] = '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'
-
         prompt = hub.pull("rlm/rag-prompt")
-        # import pdb; pdb.set_trace()
         
         def format_docs(docs):
             return "\n\n".join(doc.page_content for doc in docs)
@@ -43,17 +38,9 @@ class ConversationalChainWrapper:
             | StrOutputParser()
         )
         
-        
         self.rag_chain_with_source = RunnableParallel(
             {"context": self.retriever, "question": RunnablePassthrough()}
             ).assign(answer=rag_chain_from_docs)
-        self.rag_chain = (
-                {"context": self.retriever | format_docs, "question": RunnablePassthrough()}
-                | prompt
-                | self.llm
-                | StrOutputParser()
-            )
-        # import pdb; pdb.set_trace()
    
     def init_LLM(self):
         # self.llm = HuggingFacePipeline.from_model_id(
@@ -74,28 +61,35 @@ class ConversationalChainWrapper:
 
     def load_context_metadata(self):
         print(">>> Loading context and metadata ... ")
-        loader = CSVLoader(file_path=f'dataset/{self.context_metadata_filename}')
+        loader = CSVLoader(file_path=f'dataset/{self.context_metadata_filename}', 
+                            csv_args={
+                            'delimiter': ',',
+                            'quotechar': '"',
+                            'fieldnames': ['context','metadata']
+                        })
         self.data = loader.load()
         print(">>> Successfully load context and metadata!")
 
     def create_vectordb(self):
-        from concurrent.futures import ThreadPoolExecutor
-        from tqdm import tqdm
-
         print(">>> Creating vectorDB ...")
-        
-        # Split documents in parallel
-        def split_document(doc):
-            text_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=50)
-            return text_splitter.split_documents([doc])
-        
-        with ThreadPoolExecutor() as executor:
-            chunks = list(tqdm(executor.map(split_document, self.data), total=len(self.data), desc="Splitting documents"))
-        
-        # Flatten the list of lists
-        docs = [chunk for sublist in chunks for chunk in sublist]
+        # from concurrent.futures import ThreadPoolExecutor
+        # from tqdm import tqdm
 
-        # Initialize the embedding function
+        # def split_document(doc):
+        #     text_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=50)
+        #     return text_splitter.split_documents([doc])
+        
+        # with ThreadPoolExecutor() as executor:
+            # chunks = list(tqdm(executor.map(split_document, self.data), total=len(self.data), desc="Splitting documents"))
+        
+        # docs = [chunk for sublist in chunks for chunk in sublist]
+
+        splitter =  RecursiveCharacterTextSplitter(
+                                chunk_size=200, 
+                                chunk_overlap=50
+                                )
+        docs = splitter.split_documents(self.data)
+
         embedding_function = HuggingFaceEmbeddings(
             model_name="sentence-transformers/all-mpnet-base-v2", 
             model_kwargs={'device': 'cuda'}
@@ -111,9 +105,8 @@ class ConversationalChainWrapper:
         self.retriever = self.qdrant_collection.as_retriever()
         torch.cuda.empty_cache()
 
-        print(">>> Successfully create qdrant collection!")
+        print(">>> Successfully create qdrant collection and retriever!")
 
-from torch.utils.data import Dataset, DataLoader
 
 class QuestionsDataset(Dataset):
     def __init__(self, json_data):
@@ -127,20 +120,22 @@ class QuestionsDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.question_ground_truth[idx]
-    
+
 # Usage
 if __name__ == "__main__":
-    # os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
-    os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"  
+    import os
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    os.environ["LANGCHAIN_API_KEY"] = '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'
+    os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"  
+
     repo_id = "microsoft/Phi-3-mini-4k-instruct"
     # repo_id = "google/gemma-2b"
-    context_metadata_filename = "2016_01_english_with_metadata.csv"
+    context_metadata_filename = "2016_01_english_with_metadata_small.csv"
 
     conversational_chain = ConversationalChainWrapper(repo_id, os.environ["HUGGINGFACEHUB_API_TOKEN"], context_metadata_filename)
 
     with open('dataset/format_QAdata.json') as f:
         json_data = json.load(f)
-
 
     dataset = QuestionsDataset(json_data)
     data_loader = DataLoader(dataset, batch_size=8, shuffle=False)
@@ -148,20 +143,27 @@ if __name__ == "__main__":
     name = "Phi-3-mini-4k-instruct"
     time = time.strftime("%Y-%m-%d-%H-%M-%S")
 
-    
+    collected_data = {
+        'question': [],
+        'ground_truth': [],
+        'answer': [],
+        'contexts': []
+    }
     for batch in data_loader:
         batch = zip(batch[0], batch[1])
         for question, ground_truth in batch:
             result = conversational_chain.rag_chain_with_source.invoke(question)
             context = [doc.page_content for doc in result['context']]
             response = result['answer']
-            json_data['contexts'].append(context)
-            json_data['answer'].append(response)
+            collected_data['contexts'].append(context)
+            collected_data['answer'].append(response)
+            collected_data['question'].append(question)
+            collected_data['ground_truth'].append(ground_truth)
 
             print(f"    question: {question}\n\n    ground_truth: {ground_truth}\n\n    answer: {response}\n\n    context: {context}\n\n ---end--- \n\n")
 
         with open(f"out/{name}-{time}.json", 'a+') as f:
-            json.dump(json_data, f)
+            json.dump(collected_data, f)
             
 
 
