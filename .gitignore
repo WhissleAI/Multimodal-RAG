@@ -3,3 +3,8 @@ out/*
 *learning.py
 test.txt
 .env
+*.mp4
+*.wav
+data/context_metadata/2016_01_english_with_metadata.csv
+data/context_metadata/2016_01_french_with_metadata.csv
+data/QA/Q_and_A_pairs_data.csv

@@ -1,0 +1,61 @@
+llm:
+  model_id: "microsoft/Phi-3-mini-4k-instruct"
+  task: "text-generation"
+  batch_size: 1
+  max_new_tokens: 1024
+  temperature: 0.1
+  top_p: 0.95
+  repetition_penalty: 1.0
+  do_sample: true
+  return_full_text: false
+  # device: 0
+
+vectordb:
+  splitter:
+    type: "RecursiveCharacterTextSplitter"
+    chunk_size: 756
+    chunk_overlap: 150
+  embedding_function:
+    model_name: "sentence-transformers/all-mpnet-base-v2"
+    model_kwargs:
+      device: 0
+  qdrant:
+    location: ":memory:"
+    collection_name: "resumes"
+
+context_loader:
+  type: "CSVLoader"
+  file_path: "data/context_metadata/2016_01_english_with_metadata_small.csv"
+  csv_args:
+    delimiter: ','
+    quotechar: '"'
+    fieldnames: ['context', 'metadata']
+
+prompt:
+  template: |
+    You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
+
+    Question: {question}
+
+    Context: {context}
+
+    Answer:
+  input_variables:
+    - "question"
+    - "context"
+
+evaluation:
+  output_file: "./out/result_Phi-3-mini-4k-instruct-chunksize756-overlap150-2024-07-09-10-38-24.json"
+  metrics:
+    - "answer_correctness"
+    - "faithfulness"
+    - "answer_relevancy"
+    - "context_recall"
+
+dataloader:
+  batch_size: 8
+  shuffle: false
+
+dataset:
+  file: "data/QA/format_QAdata.json"
+  language: "english"

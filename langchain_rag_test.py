@@ -8,6 +8,9 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFacePipeline
 from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+
 
 # Load, chunk and index the contents of the blog.
 bs_strainer = bs4.SoupStrainer(class_=("post-content", "post-title", "post-header"))
@@ -28,16 +31,22 @@ vectorstore = Chroma.from_documents(documents=splits, embedding=embedding_functi
 # Retrieve and generate using the relevant snippets of the blog.
 retriever = vectorstore.as_retriever()
 prompt = hub.pull("rlm/rag-prompt")
-llm = HuggingFacePipeline.from_model_id(
-    model_id="google/gemma-2b",
-    task="text-generation",
-    pipeline_kwargs={
-        "max_new_tokens": 150,  # to be confirmed 
-        "top_k": 50,
-        "temperature": 0.25,
-        "do_sample": True
-    },
-    device=0
+# llm = HuggingFacePipeline.from_model_id(
+#     model_id="google/gemma-2b",
+#     task="text-generation",
+#     pipeline_kwargs={
+#         "max_new_tokens": 150,  # to be confirmed 
+#         "top_k": 20,
+#         "temperature": 0.7,
+#         "do_sample": True
+#     },
+#     device=0
+# )
+from langchain_community.llms import HuggingFaceEndpoint
+import os
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = "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"
+llm = HuggingFaceEndpoint(
+    repo_id="google/gemma-2b", max_length=200, temperature=0.7, token=os.environ["HUGGINGFACEHUB_API_TOKEN"]
 )
 print(">>> Successfully initialize LLM!")
 
@@ -52,8 +61,26 @@ rag_chain = (
     | llm
     | StrOutputParser()
 )
+# custom_template = """
+#     "role": "user",
+#     "content": 
+#     "We have provided context information below. \n"
+#     "---------------------\n"
+#     "{context_str}"
+#     "\n---------------------\n"
+#     "Given this information, please answer the question: {query}"
+#     """
+# CUSTOM_QUESTION_PROMPT = PromptTemplate(template=custom_template, input_variables=['context_str', 'query'])
 
-print(rag_chain.invoke("What is Task Decomposition?"))
+# rag_chain = LLMChain(prompt=prompt, llm=llm)
+
+query = "What is Task Decomposition?"
+context = retriever.invoke(input=query)
+context = [c.page_content for c in context]
+context_str = "\n\n".join(context)
+res = rag_chain.invoke(query)
+print(res)
+# print(rag_chain.invoke())
 
 '''
 Human: You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know16:06:26 [8/1755$
