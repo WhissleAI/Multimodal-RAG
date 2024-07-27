@@ -1,4 +1,4 @@
-# TV News RAG
+# RAG for documents: containing text paired with metadata
 
 ## how to run
 
