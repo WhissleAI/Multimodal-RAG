@@ -23,29 +23,54 @@ class RagPipeline:
         self.context_metadata_filename = config['context_loader']['file_path']
         self.collection_name = config['vectordb']['qdrant']['collection_name']
 
-        self.load_context_metadata()
-        self.create_vectordb()
-        self.init_LLM()
+        if self.config['use_rag']:
+            self.load_context_metadata()
+            self.create_vectordb()
+            self.init_LLM()
 
-        prompt_template = PromptTemplate(
-            template=config['prompt']['template'],
-            input_variables=config['prompt']['input_variables']
-        )
-        
-        def format_docs(docs):
-            return "\n\n".join(doc.page_content for doc in docs)
-        
-        rag_chain_from_docs = (
-            RunnablePassthrough.assign(context=(lambda x: format_docs(x["context"])))
-            | prompt_template
-            | self.llm
-            | StrOutputParser()
-        )
-        
-        self.rag_chain_with_source = RunnableParallel(
-            {"context": self.retriever, "question": RunnablePassthrough()}
-        ).assign(answer=rag_chain_from_docs)
-   
+            if self.config['dataset']['language'] == 'en':
+                prompt_template = PromptTemplate(
+                    template=config['prompt']['template_en_rag'],
+                    input_variables=config['prompt']['input_variables_rag']
+                )
+            elif self.config['dataset']['language'] == 'fr':
+                prompt_template = PromptTemplate(
+                    template=config['prompt']['template_fr_rag'],
+                    input_variables=config['prompt']['input_variables_rag']
+                )
+            
+            def format_docs(docs):
+                return "\n\n".join(doc.page_content for doc in docs)
+            
+            rag_chain_from_docs = (
+                RunnablePassthrough.assign(context=(lambda x: format_docs(x["context"])))
+                | prompt_template
+                | self.llm
+                | StrOutputParser()
+            )
+            
+            self.conversation_chain = RunnableParallel(
+                {"context": self.retriever, "question": RunnablePassthrough()}
+            ).assign(answer=rag_chain_from_docs)
+        else:
+            self.init_LLM()
+            if self.config['dataset']['language'] == 'en':
+                prompt_template = PromptTemplate(
+                    template=config['prompt']['template_en_without_rag'],
+                    input_variables=config['prompt']['input_variables_without_rag']
+                )
+            elif self.config['dataset']['language'] == 'fr':
+                prompt_template = PromptTemplate(
+                    template=config['prompt']['template_fr_without_rag'],
+                    input_variables=config['prompt']['input_variables_without_rag']
+                )
+            chain = (
+                prompt_template | self.llm | StrOutputParser()
+                )
+            self.conversation_chain = RunnableParallel(
+                {"question": RunnablePassthrough()}
+            ).assign(answer=chain)
+            
     @log_execution
     def init_LLM(self):
         self.llm = HuggingFacePipeline.from_model_id(
@@ -67,7 +92,8 @@ class RagPipeline:
     def load_context_metadata(self):
         loader = CSVLoader(
             file_path=self.config['context_loader']['file_path'], 
-            csv_args=self.config['context_loader']['csv_args']
+            csv_args=self.config['context_loader']['csv_args'],
+            metadata = self.config['context_loader']['metadata']
         )
         self.data = loader.load()
 

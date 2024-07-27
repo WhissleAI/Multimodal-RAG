@@ -10,9 +10,9 @@ import csv
 
 
 
-async def aeval(output_dict, config, filename):
-    if not os.path.exists(f"../out/eval-{filename}.csv"):
-        with open(f"../out/eval-{filename}.csv", 'w') as f:
+async def aeval(output_dict, config, outpath):
+    if not os.path.exists(f"{outpath}/eval.csv"):
+        with open(f"{outpath}/eval.csv", 'w') as f:
             f.write(",".join(config['evaluation']['metrics']))        
     metric_names = config['evaluation']['metrics']
     
@@ -30,7 +30,7 @@ async def aeval(output_dict, config, filename):
         raise_exceptions=False,
     )
 
-    async with aiofiles.open(f"../out/eval-{filename}.csv", 'a+') as f:
+    async with aiofiles.open(f"{outpath}/eval.csv", 'a+') as f:
         await f.write(",".join([item for key, item in result.items()]))
     print("eval_result: " + result)
 
@@ -38,3 +38,7 @@ def get_avg_result(filepath):
     data = np.genfromtxt(filepath, delimiter=',', skip_header=1)
     means = np.mean(data, axis=0)
     print("Column means:", means)
+    with open(filepath) as f:
+        writer = csv.writer(f)
+        writer.writerow("mean: ")
+        writer.writerow(means)

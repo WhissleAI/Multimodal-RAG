@@ -1,6 +1,6 @@
 import os
 import json
-import time
+from utils import experiment_init
 import torch
 import yaml
 from torch.utils.data import Dataset, DataLoader
@@ -25,7 +25,7 @@ def rag_and_eval():
         try:
             batch = zip(batch[0], batch[1])
             for question, ground_truth in batch:
-                result = conversational_chain.rag_chain_with_source.invoke(question)
+                result = conversational_chain.conversation_chain.invoke(question)
                 context = [doc.page_content for doc in result['context']]
                 response = result['answer']
                 collected_data['contexts'].append(context)
@@ -44,9 +44,9 @@ def rag_and_eval():
                 print(data)
 
                 eval_dataset = Dataset.from_dict(data)
-                asyncio.run(aeval(eval_dataset, config, name))
+                asyncio.run(aeval(eval_dataset, config, outpath))
                 
-            output_filename = f"../out/{name}-{current_time}.json"
+            output_filename = f"{outpath}/result.json"
             with open(output_filename, 'w') as f:
                 json.dump(collected_data, f)
             print(f"batch {i} finished.")
@@ -56,20 +56,14 @@ def rag_and_eval():
 if __name__ == "__main__":
     os.chdir("Multimodal-RAG-opensource")
     load_dotenv()
-    langchain_tracing_v2 = os.getenv('LANGCHAIN_TRACING_V2')
-    langchain_api_key = os.getenv('LANGCHAIN_API_KEY')
 
     torch.cuda.empty_cache()
     
     with open('src/configs.yml', 'r') as f:
         config = yaml.safe_load(f)
 
-    name = config['llm']['model_id'].split('/')[1] + \
-            "-" + config['dataset']['language'] + \
-            "-chunksize-" + str(config['vectordb']['splitter']['chunk_size']) + \
-            "-overlap-" + str(config['vectordb']['splitter']['chunk_overlap'])
-    current_time = time.strftime("%Y-%m-%d-%H-%M-%S")
-
+    outpath = experiment_init()
+    
     conversational_chain = RagPipeline(config)
 
     with open(config['dataset']['file']) as f:
@@ -81,5 +75,5 @@ if __name__ == "__main__":
 
     rag_and_eval()
 
-    get_avg_result(f"../out/eval-{name}.csv")
+    get_avg_result(f"{outpath}/eval.csv")
 

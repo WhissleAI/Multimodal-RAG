@@ -4,7 +4,6 @@ llm:
   batch_size: 1
   max_new_tokens: 1024
   temperature: 0.1
-  top_p: 0.95
   repetition_penalty: 1.0
   do_sample: true
   return_full_text: false
@@ -27,12 +26,12 @@ context_loader:
   type: "CSVLoader"
   file_path: "data/context_metadata/2016_01_english_with_metadata_small.csv"
   csv_args:
-    delimiter: ','
+    delimiter: ","
     quotechar: '"'
-    fieldnames: ['context', 'metadata']
+  metadata: ["metadata"]
 
 prompt:
-  template: |
+  template_en_rag: |
     You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
 
     Question: {question}
@@ -40,22 +39,45 @@ prompt:
     Context: {context}
 
     Answer:
-  input_variables:
+  template_en_without_rag: |
+    You are an assistant for question-answering tasks. If you don't know the answer, just say that you don't know. Keep the answer concise.
+
+    Question: {question}
+
+    Answer:
+  template_fr_rag: |
+    Vous êtes un assistant pour les tâches de question-réponse. Utilisez les morceaux de contexte suivants pour répondre à la question. Si vous ne connaissez pas la réponse, dites simplement que vous ne savez pas. Utilisez trois phrases maximum et gardez la réponse concise.
+
+    Question: {question}
+
+    Contexte: {context}
+
+    Réponse:
+  template_fr_without_rag: |
+    Vous êtes un assistant pour les tâches de question-réponse. Si vous ne connaissez pas la réponse, dites simplement que vous ne savez pas. Gardez la réponse concise.
+
+    Question: {question}
+
+    Réponse:
+  input_variables_rag:
     - "question"
     - "context"
+  input_variables_without_rag:
+    - "question"
 
 evaluation:
-  output_file: "./out/result_Phi-3-mini-4k-instruct-chunksize756-overlap150-2024-07-09-10-38-24.json"
   metrics:
-    - "answer_correctness"
-    - "faithfulness"
-    - "answer_relevancy"
     - "context_recall"
+    - "context_precision"
+    - "answer_correctness"
+    - "answer_relevancy"
 
 dataloader:
   batch_size: 8
   shuffle: false
 
 dataset:
-  file: "data/QA/format_QAdata.json"
-  language: "english"
+  file: "data/QA/format_QAdata_small.json"
+  language: "en"
+
+use_rag: true
