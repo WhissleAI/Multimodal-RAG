@@ -8,6 +8,7 @@ from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from utils import log_execution
+from langchain_huggingface import HuggingFaceEndpoint
 
 import os
 from dotenv import load_dotenv
@@ -73,27 +74,33 @@ class RagPipeline:
             
     @log_execution
     def init_LLM(self):
-        self.llm = HuggingFacePipeline.from_model_id(
-            model_id=self.repo_id,
-            task=self.config['llm']['task'],
-            batch_size=self.config['llm']['batch_size'],
-            pipeline_kwargs={
-                "max_new_tokens": self.config['llm']['max_new_tokens'],
-                "temperature": self.config['llm']['temperature'],
-                "top_p": self.config['llm']['top_p'],
-                "repetition_penalty": self.config['llm']['repetition_penalty'],
-                "do_sample": self.config['llm']['do_sample'],
-                "return_full_text": self.config['llm']['return_full_text']
-            },
-            device=self.config['llm']['device'],
-        )
+        if not self.config['llm']['use_endpoint']:
+            self.llm = HuggingFacePipeline.from_model_id(
+                model_id=self.repo_id,
+                task=self.config['llm']['task'],
+                batch_size=self.config['llm']['batch_size'],
+                pipeline_kwargs={
+                    "max_new_tokens": self.config['llm']['max_new_tokens'],
+                    "temperature": self.config['llm']['temperature'],
+                    "repetition_penalty": self.config['llm']['repetition_penalty'],
+                    "do_sample": self.config['llm']['do_sample'],
+                    "return_full_text": self.config['llm']['return_full_text']
+                },
+                device=self.config['llm']['device'],
+            )
+        else:
+            self.llm = HuggingFaceEndpoint(
+                repo_id=self.repo_id,
+                max_new_tokens=self.config['llm']['max_new_tokens'],
+                temperature=self.config['llm']['temperature']
+            )
 
     @log_execution
     def load_context_metadata(self):
         loader = CSVLoader(
             file_path=self.config['context_loader']['file_path'], 
             csv_args=self.config['context_loader']['csv_args'],
-            metadata = self.config['context_loader']['metadata']
+            metadata_columns = self.config['context_loader']['metadata_columns']
         )
         self.data = loader.load()
 

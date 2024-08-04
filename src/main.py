@@ -54,7 +54,7 @@ def rag_and_eval():
             print(f"batch {i} failed.")
 
 if __name__ == "__main__":
-    os.chdir("Multimodal-RAG-opensource")
+    # os.chdir("Multimodal-RAG-opensource")
     load_dotenv()
 
     torch.cuda.empty_cache()

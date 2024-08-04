@@ -7,7 +7,8 @@ llm:
   repetition_penalty: 1.0
   do_sample: true
   return_full_text: false
-  # device: 0
+  device: 0
+  use_endpoint: true
 
 vectordb:
   splitter:
@@ -28,7 +29,7 @@ context_loader:
   csv_args:
     delimiter: ","
     quotechar: '"'
-  metadata: ["metadata"]
+  metadata_columns: ["metadata"]
 
 prompt:
   template_en_rag: |
