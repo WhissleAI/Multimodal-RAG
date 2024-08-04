@@ -13,3 +13,4 @@ python-dotenv
 langchain_huggingface
 aiofiles
 ragas
+easydict

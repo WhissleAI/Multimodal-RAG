@@ -18,6 +18,8 @@ async def aeval(output_dict, config, outpath):
     
     metrics = []
     for metric_name in metric_names:
+        if (metric_name=="context_recall" or metric_name=="context_precision") and config['use_rag']:
+            continue
         module = importlib.import_module('ragas.metrics')
         metric = getattr(module, metric_name)
         metrics.append(metric)
