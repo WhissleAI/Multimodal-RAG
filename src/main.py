@@ -59,21 +59,21 @@ if __name__ == "__main__":
 
     torch.cuda.empty_cache()
     
-    with open('src/configs.yml', 'r') as f:
-        config = yaml.safe_load(f)
-
     outpath = experiment_init()
-    
-    conversational_chain = RagPipeline(config)
 
-    with open(config['dataset']['file']) as f:
-        json_data = json.load(f)
+    with open(f"{outpath}/configs.yml", 'r') as f:
+        config = yaml.safe_load(f)    
 
-    dataset = QuestionsDataset(json_data)
-    data_loader = DataLoader(dataset, batch_size=config['dataloader']['batch_size'], shuffle=config['dataloader']['shuffle'])
+    # conversational_chain = RagPipeline(config)
+
+    # with open(config['dataset']['file']) as f:
+    #     json_data = json.load(f)
+
+    # dataset = QuestionsDataset(json_data)
+    # data_loader = DataLoader(dataset, batch_size=config['dataloader']['batch_size'], shuffle=config['dataloader']['shuffle'])
 
 
-    rag_and_eval()
+    # rag_and_eval()
 
-    get_avg_result(f"{outpath}/eval.csv")
+    # get_avg_result(f"{outpath}/eval.csv")
 
