@@ -38,10 +38,10 @@ def rag_and_eval():
                 collected_data['ground_truth'].append(ground_truth)
 
                 data = {
-                'question': question,
-                'ground_truth': ground_truth,
-                'answer': response,
-                'contexts': context        
+                'question': [question],
+                'ground_truth': [ground_truth],
+                'answer': [response],
+                'contexts': [context]        
                 }
 
                 # print(f"    question: {question}\n\n    ground_truth: {ground_truth}\n\n    answer: {response}\n\n    context: {context}\n\n ---end--- \n\n")
