@@ -3,7 +3,8 @@ import json
 from utils import experiment_init
 import torch
 import yaml
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
+from datasets import Dataset
 import huggingface_hub
 import os
 from dotenv import load_dotenv
