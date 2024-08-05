@@ -30,7 +30,7 @@ def rag_and_eval():
                 if config['use_rag']:
                     context = [doc.page_content for doc in result['context']]        
                 else:
-                    context = []
+                    context = [""]
                 collected_data['contexts'].append(context)
                 response = result['answer']
                 collected_data['answer'].append(response)
@@ -41,7 +41,7 @@ def rag_and_eval():
                 'question': [question],
                 'ground_truth': [ground_truth],
                 'answer': [response],
-                'contexts': [context]        
+                'contexts': context        
                 }
 
                 # print(f"    question: {question}\n\n    ground_truth: {ground_truth}\n\n    answer: {response}\n\n    context: {context}\n\n ---end--- \n\n")
