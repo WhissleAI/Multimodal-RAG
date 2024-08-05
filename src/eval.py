@@ -31,8 +31,8 @@ async def aeval(eval_dataset, config, outpath):
     )
 
     async with aiofiles.open(f"{outpath}/eval.csv", 'a+') as f:
+        await f.write("\n")
         await f.write(",".join([str(item) for key, item in result.items()]))
-    print("eval_result: " + result)
 
 def get_avg_result(filepath):
     data = np.genfromtxt(filepath, delimiter=',', skip_header=1)
