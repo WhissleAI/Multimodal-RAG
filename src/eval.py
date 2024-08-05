@@ -1,7 +1,7 @@
 import importlib
 import aiofiles
 from ragas import evaluate
-from datasets import Dataset as Datasets
+from datasets import Dataset
 import json
 import numpy as np
 import json
@@ -10,7 +10,7 @@ import csv
 
 
 
-async def aeval(output_dict, config, outpath):
+async def aeval(eval_dataset, config, outpath):
     if not os.path.exists(f"{outpath}/eval.csv"):
         with open(f"{outpath}/eval.csv", 'w') as f:
             f.write(",".join(config['evaluation']['metrics']))        
@@ -23,8 +23,6 @@ async def aeval(output_dict, config, outpath):
         module = importlib.import_module('ragas.metrics')
         metric = getattr(module, metric_name)
         metrics.append(metric)
-
-    eval_dataset = Datasets.from_dict(output_dict)
 
     result = evaluate(
         eval_dataset,
