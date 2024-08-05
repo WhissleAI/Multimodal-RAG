@@ -27,8 +27,10 @@ def rag_and_eval():
             for question, ground_truth in batch:
                 result = conversational_chain.conversation_chain.invoke(question)
                 if config['use_rag']:
-                    context = [doc.page_content for doc in result['context']]
-                    collected_data['contexts'].append(context)
+                    context = [doc.page_content for doc in result['context']]        
+                else:
+                    context = []
+                collected_data['contexts'].append(context)
                 response = result['answer']
                 collected_data['answer'].append(response)
                 collected_data['question'].append(question)
