@@ -11,18 +11,18 @@ import csv
 
 
 async def aeval(eval_dataset, config, outpath):
-    if not os.path.exists(f"{outpath}/eval.csv"):
-        with open(f"{outpath}/eval.csv", 'w') as f:
-            f.write(",".join(config['evaluation']['metrics']))        
     metric_names = config['evaluation']['metrics']
-    
     metrics = []
     for metric_name in metric_names:
-        if (metric_name=="context_recall" or metric_name=="context_precision") and config['use_rag']:
+        if (metric_name=="context_recall" or metric_name=="context_precision") and not config['use_rag']:
             continue
         module = importlib.import_module('ragas.metrics')
         metric = getattr(module, metric_name)
         metrics.append(metric)
+
+    if not os.path.exists(f"{outpath}/eval.csv"):
+        with open(f"{outpath}/eval.csv", 'w') as f:
+            f.write(",".join(metrics)) 
 
     result = evaluate(
         eval_dataset,

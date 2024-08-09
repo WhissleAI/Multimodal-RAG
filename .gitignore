@@ -7,3 +7,4 @@ test.txt
 *.wav
 data/context_metadata/2016_01_english_with_metadata.csv
 data/context_metadata/2016_01_french_with_metadata.csv
+data/context_metadata/processed_2016_01_english_with_metadata.csv

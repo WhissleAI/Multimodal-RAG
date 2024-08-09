@@ -29,7 +29,7 @@ context_loader:
   csv_args:
     delimiter: ","
     quotechar: '"'
-  metadata_columns: ["metadata"]
+  metadata_columns: ['lan', 'src', 'dur', 'col', 'path']
 
 prompt:
   template_en_rag: |
