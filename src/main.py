@@ -9,6 +9,7 @@ import huggingface_hub
 import os
 from dotenv import load_dotenv
 import asyncio
+from tqdm import tqdm
 
 from RagPipeline import RagPipeline
 from QAdataset import QuestionsDataset
@@ -22,7 +23,7 @@ def rag_and_eval():
         'answer': [],
         'contexts': []
     }
-    for i, batch in enumerate(data_loader):
+    for i, batch in tqdm(enumerate(data_loader)):
         try:
             batch = zip(batch[0], batch[1])
             for question, ground_truth in batch:
