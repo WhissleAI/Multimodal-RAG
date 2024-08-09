@@ -79,5 +79,5 @@ if __name__ == "__main__":
 
     rag_and_eval()
 
-    get_avg_result(f"{outpath}/eval.csv")
+    get_avg_result(outpath)
 

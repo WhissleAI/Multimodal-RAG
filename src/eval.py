@@ -34,11 +34,10 @@ async def aeval(eval_dataset, config, outpath):
         await f.write("\n")
         await f.write(",".join([str(item) for key, item in result.items()]))
 
-def get_avg_result(filepath):
-    data = np.genfromtxt(filepath, delimiter=',', skip_header=1)
+def get_avg_result(outpath):
+    data = np.genfromtxt(f"{outpath}/eval.csv", delimiter=',', skip_header=1)
     means = np.mean(data, axis=0)
     print("Column means:", means)
-    with open(filepath) as f:
+    with open(f"{outpath}/final_eval.csv") as f:
         writer = csv.writer(f)
-        writer.writerow("mean: ")
         writer.writerow(means)

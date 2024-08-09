@@ -1,3 +1,9 @@
+export HUGGINGFACE_TOKEN="<your-huggingface-token>"
+export LANGCHAIN_TRACING_V2=true
+export LANGCHAIN_API_KEY="<your-langchain-api-key>"
+export OPENAI_API_KEY="<your-openai-api-key>"
+
+
 # off the shelf model, no rag
 python src/main.py --cfg-options \
     llm.model_id="microsoft/Phi-3-mini-4k-instruct" \
