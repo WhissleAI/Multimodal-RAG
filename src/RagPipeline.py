@@ -120,7 +120,8 @@ class RagPipeline:
         self.qdrant_collection = Qdrant.from_documents(
             docs,
             embedding_function,
-            location=self.config['vectordb']['qdrant']['location'],
+            host=self.config['vectordb']['qdrant']['host'],
+            path=self.config['vectordb']['qdrant']['path'],
             collection_name=self.config['vectordb']['qdrant']['collection_name'],
         )
         
