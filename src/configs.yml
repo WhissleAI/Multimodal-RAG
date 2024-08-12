@@ -20,7 +20,8 @@ vectordb:
     model_kwargs:
       device: 0
   qdrant:
-    location: "./data/vectordb"
+    host: "localhost"
+    path: "./data/vectordb"
     collection_name: "resumes"
 
 context_loader:
@@ -29,7 +30,7 @@ context_loader:
   csv_args:
     delimiter: ","
     quotechar: '"'
-  metadata_columns: ['lan', 'src', 'dur', 'col', 'path']
+  metadata_columns: ["lan", "src", "dur", "col", "path"]
 
 prompt:
   template_en_rag: |
