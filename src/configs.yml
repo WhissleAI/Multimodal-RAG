@@ -20,7 +20,6 @@ vectordb:
     model_kwargs:
       device: 0
   qdrant:
-    host: "localhost"
     path: "./data/vectordb"
     collection_name: "resumes"
 
