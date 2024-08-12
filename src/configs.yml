@@ -20,7 +20,7 @@ vectordb:
     model_kwargs:
       device: 0
   qdrant:
-    location: ":memory:"
+    location: "./data/vectordb"
     collection_name: "resumes"
 
 context_loader:

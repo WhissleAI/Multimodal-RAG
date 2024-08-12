@@ -121,7 +121,7 @@ class RagPipeline:
             docs,
             embedding_function,
             location=self.config['vectordb']['qdrant']['location'],
-            collection_name=self.config['vectordb']['qdrant']['collection_name']
+            collection_name=self.config['vectordb']['qdrant']['collection_name'],
         )
         
         self.retriever = self.qdrant_collection.as_retriever()
