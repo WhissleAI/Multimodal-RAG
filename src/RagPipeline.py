@@ -14,7 +14,8 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-
+from nemoguardrails import RailsConfig
+from nemoguardrails.integrations.langchain.runnable_rails import RunnableRails
 
 class RagPipeline:
     def __init__(self, config):
@@ -71,7 +72,12 @@ class RagPipeline:
             self.conversation_chain = RunnableParallel(
                 {"question": RunnablePassthrough()}
             ).assign(answer=chain)
-            
+        
+        guardrails_config = RailsConfig.from_path(config['guardrails']['config_path'])
+        self.guardrails = RunnableRails(guardrails_config)
+
+        self.chain_with_guardrails = self.guardrails | self.conversation_chain
+
     @log_execution
     def init_LLM(self):
         if not self.config['llm']['use_endpoint']:

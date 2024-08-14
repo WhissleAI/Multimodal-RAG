@@ -27,7 +27,10 @@ def rag_and_eval():
         try:
             batch = zip(batch[0], batch[1])
             for question, ground_truth in batch:
-                result = conversational_chain.conversation_chain.invoke(question)
+                if config['use_guardrails']:
+                    result = conversational_chain.conversation_chain.invoke(question)
+                else:
+                    result = conversational_chain.chain_with_guardrails.invoke(question)
                 if config['use_rag']:
                     context = [doc.page_content for doc in result['context']]        
                 else:
