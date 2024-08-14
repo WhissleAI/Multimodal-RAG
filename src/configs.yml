@@ -81,5 +81,8 @@ dataset:
   file: "data/QA/format_QAdata_small.json"
   language: "en"
 
+guardrails:
+  config_path: "guardrails_config"
+
 use_rag: true
 use_guardrails: true
