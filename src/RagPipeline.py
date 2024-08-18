@@ -123,18 +123,21 @@ class RagPipeline:
             model_kwargs=self.config['vectordb']['embedding_function']['model_kwargs']
         )
 
-        # self.qdrant_collection = Qdrant.from_documents(
-        #     docs,
-        #     embedding_function,
-        #     path=self.config['vectordb']['qdrant']['path'],
-        #     collection_name=self.config['vectordb']['qdrant']['collection_name'],
-        # )
-
-        self.qdrant_collection = Qdrant.from_existing_collection(
-            collection_name=self.config['vectordb']['qdrant']['collection_name'],
-            embedding=embedding_function,
-            path=self.config['vectordb']['qdrant']['path']
-        )
+        if self.config['vectordb']['create_new_collection']:
+            print("Creating new collection ...")
+            self.qdrant_collection = Qdrant.from_documents(
+                docs,
+                embedding_function,
+                path=self.config['vectordb']['qdrant']['path'],
+                collection_name=self.config['vectordb']['qdrant']['collection_name'],
+            )
+        else:
+            print("Using existing collection ...")
+            self.qdrant_collection = Qdrant.from_existing_collection(
+                collection_name=self.config['vectordb']['qdrant']['collection_name'],
+                embedding=embedding_function,
+                path=self.config['vectordb']['qdrant']['path']
+            )
 
         self.retriever = self.qdrant_collection.as_retriever()
         torch.cuda.empty_cache()

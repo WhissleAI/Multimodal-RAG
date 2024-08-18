@@ -11,6 +11,7 @@ llm:
   use_endpoint: true
 
 vectordb:
+  create_new_collection: false
   splitter:
     type: "RecursiveCharacterTextSplitter"
     chunk_size: 756

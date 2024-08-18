@@ -19,4 +19,5 @@ data/context_metadata/eng_context_metadata/2016_09_english.csv
 data/context_metadata/eng_context_metadata/2016_10_english.csv
 data/context_metadata/eng_context_metadata/2016_11_english.csv
 data/context_metadata/eng_context_metadata/2016_12_english.csv
-scripts/run.sh
+scripts/*
+data/vectordb/*

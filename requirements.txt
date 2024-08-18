@@ -15,3 +15,4 @@ aiofiles
 ragas
 easydict
 pytz
+nemoguardrails
