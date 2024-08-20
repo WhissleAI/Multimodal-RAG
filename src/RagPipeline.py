@@ -31,10 +31,16 @@ class RagPipeline:
             self.init_LLM()
 
             if self.config['dataset']['language'] == 'en':
-                prompt_template = PromptTemplate(
-                    template=config['prompt']['template_en_rag'],
-                    input_variables=config['prompt']['input_variables_rag']
-                )
+                if self.config['llm']['model_id'] == "RedHenLabs/news-reporter-3b":
+                    prompt_template = PromptTemplate(
+                        template=config['prompt']['fine_tuned_rag'],
+                        input_variables=config['prompt']['input_variables_rag']
+                    )
+                else:
+                    prompt_template = PromptTemplate(
+                        template=config['prompt']['template_en_rag'],
+                        input_variables=config['prompt']['input_variables_rag']
+                    )
             elif self.config['dataset']['language'] == 'fr':
                 prompt_template = PromptTemplate(
                     template=config['prompt']['template_fr_rag'],
@@ -57,10 +63,16 @@ class RagPipeline:
         else:
             self.init_LLM()
             if self.config['dataset']['language'] == 'en':
-                prompt_template = PromptTemplate(
-                    template=config['prompt']['template_en_without_rag'],
-                    input_variables=config['prompt']['input_variables_without_rag']
-                )
+                if self.config['llm']['model_id'] == "RedHenLabs/news-reporter-3b":
+                    prompt_template = PromptTemplate(
+                        template=config['prompt']['fine_tuned_without_rag'],
+                        input_variables=config['prompt']['input_variables_without_rag']
+                    )
+                else:
+                    prompt_template = PromptTemplate(
+                        template=config['prompt']['template_en_without_rag'],
+                        input_variables=config['prompt']['input_variables_without_rag']
+                    )
             elif self.config['dataset']['language'] == 'fr':
                 prompt_template = PromptTemplate(
                     template=config['prompt']['template_fr_without_rag'],

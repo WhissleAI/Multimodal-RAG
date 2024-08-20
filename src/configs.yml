@@ -32,6 +32,27 @@ context_loader:
     quotechar: '"'
   metadata_columns: ["lan", "src", "dur", "col", "path"]
 
+evaluation:
+  metrics:
+    - "context_recall"
+    - "context_precision"
+    - "answer_correctness"
+    - "answer_relevancy"
+
+dataloader:
+  batch_size: 8
+  shuffle: false
+
+dataset:
+  file: "data/QA/format_QAdata_small.json"
+  language: "en"
+
+guardrails:
+  config_path: "guardrails_config"
+
+use_rag: true
+use_guardrails: true
+
 prompt:
   template_en_rag: |
     You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
@@ -66,24 +87,7 @@ prompt:
     - "context"
   input_variables_without_rag:
     - "question"
-
-evaluation:
-  metrics:
-    - "context_recall"
-    - "context_precision"
-    - "answer_correctness"
-    - "answer_relevancy"
-
-dataloader:
-  batch_size: 8
-  shuffle: false
-
-dataset:
-  file: "data/QA/format_QAdata_small.json"
-  language: "en"
-
-guardrails:
-  config_path: "guardrails_config"
-
-use_rag: true
-use_guardrails: true
+  fine_tuned_rag: |
+    "role": "user", "content": "Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n\nQuestion: {question}\n\nContext: {context}\n\nAnswer:"
+  fine_tuned_without_rag: |
+    "role": "user", "content": "If you don't know the answer, just say that you don't know. Keep the answer concise.\n\nQuestion: {question}\n\nAnswer:"
