@@ -12,7 +12,7 @@ from utils import log_execution
 from langchain_huggingface import HuggingFaceEndpoint
 
 from langchain.output_parsers import GuardrailsOutputParser
-from langserve.client import RemoteRunnable
+# from langserve.client import RemoteRunnable
 
 
 import os
@@ -51,7 +51,7 @@ class RagPipeline:
                 </rail>
                 """
             # output_parser = GuardrailsOutputParser.from_rail_string(rail_str)
-            output_parser = RemoteRunnable("http://localhost:8000/guardrails-output-parser")
+            # output_parser = RemoteRunnable("http://localhost:8000/guardrails-output-parser")
         else:
             output_parser = StrOutputParser()
 
