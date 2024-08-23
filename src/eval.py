@@ -10,7 +10,7 @@ import csv
 
 
 
-async def aeval(eval_dataset, config, outpath):
+def aeval(eval_dataset, config, outpath):
     metric_names = config["evaluation"]["metrics"]
     metrics = {}
     for metric_name in metric_names:
@@ -25,22 +25,22 @@ async def aeval(eval_dataset, config, outpath):
     if not os.path.exists(f"{outpath}/eval.csv"):
         with open(f"{outpath}/eval.csv", "w") as f:
             f.write(",".join(metrics.keys()))
-
+    
     result = evaluate(
         eval_dataset,
         metrics=[metric for metric in metrics.values()],
         raise_exceptions=False,
     )
 
-    async with aiofiles.open(f"{outpath}/eval.csv", "a+") as f:
-        await f.write("\n")
-        await f.write(",".join([str(item) for key, item in result.items()]))
+    with open(f"{outpath}/eval.csv", "a+") as f:
+        f.write("\n")
+        f.write(",".join([str(item) for key, item in result.items()]))
 
 
 def get_avg_result(outpath):
     data = np.genfromtxt(f"{outpath}/eval.csv", delimiter=",", skip_header=1)
-    means = np.mean(data, axis=0)
+    means = np.nanmean(data, axis=0)
     print("Column means:", means)
-    with open(f"{outpath}/final_eval.csv") as f:
+    with open(f"{outpath}/final_eval.csv", 'w') as f:
         writer = csv.writer(f)
         writer.writerow(means)

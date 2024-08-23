@@ -7,7 +7,7 @@ llm:
   repetition_penalty: 1.0
   do_sample: true
   return_full_text: false
-  device: 0
+  device_map: 'auto'
   use_endpoint: true
 
 vectordb:
@@ -26,7 +26,7 @@ vectordb:
 
 context_loader:
   type: "CSVLoader"
-  file_path: "data/context_metadata/2016_01_english_with_metadata_small.csv"
+  file_path: "data/context_metadata/processed_2016_01_english_with_metadata_small.csv"
   csv_args:
     delimiter: ","
     quotechar: '"'
@@ -88,6 +88,16 @@ prompt:
   input_variables_without_rag:
     - "question"
   fine_tuned_rag: |
-    "role": "user", "content": "Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.\n\nQuestion: {question}\n\nContext: {context}\n\nAnswer:"
+    You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
+    
+    Question: {question}
+    
+    Context: {context}
+    
+    Answer:"
   fine_tuned_without_rag: |
-    "role": "user", "content": "If you don't know the answer, just say that you don't know. Keep the answer concise.\n\nQuestion: {question}\n\nAnswer:"
+    You are an assistant for question-answering tasks. If you don't know the answer, just say that you don't know. Keep the answer concise.
+    
+    Question: {question}
+    
+    Answer:"

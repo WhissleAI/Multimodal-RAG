@@ -16,3 +16,4 @@ ragas
 easydict
 pytz
 nemoguardrails
+guardrails-ai

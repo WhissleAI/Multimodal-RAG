@@ -1,14 +1,19 @@
 import torch
 from langchain_huggingface import HuggingFacePipeline
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import Qdrant
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Qdrant
+import csv
 from langchain_community.document_loaders import CSVLoader
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from utils import log_execution
 from langchain_huggingface import HuggingFaceEndpoint
+
+from langchain.output_parsers import GuardrailsOutputParser
+from langserve.client import RemoteRunnable
+
 
 import os
 from dotenv import load_dotenv
@@ -24,6 +29,31 @@ class RagPipeline:
         self.token = os.getenv('HUGGINGFACEHUB_API_TOKEN')
         self.context_metadata_filename = config['context_loader']['file_path']
         self.collection_name = config['vectordb']['qdrant']['collection_name']
+
+        if self.config['use_guardrails']:
+            rail_str = """
+                <rail version="0.1">
+                <output>
+                    <string 
+                        description="Profanity-free translation" 
+                        format="is-profanity-free" 
+                        name="translated_statement" 
+                        on-fail-is-profanity-free="fix">
+                    </string>
+                </output>
+                <prompt>
+                    Translate the given statement into English:
+
+                    ${statement_to_be_translated}
+
+                    ${gr.complete_json_suffix}
+                </prompt>
+                </rail>
+                """
+            # output_parser = GuardrailsOutputParser.from_rail_string(rail_str)
+            output_parser = RemoteRunnable("http://localhost:8000/guardrails-output-parser")
+        else:
+            output_parser = StrOutputParser()
 
         if self.config['use_rag']:
             self.load_context_metadata()
@@ -54,7 +84,7 @@ class RagPipeline:
                 RunnablePassthrough.assign(context=(lambda x: format_docs(x["context"])))
                 | prompt_template
                 | self.llm
-                | StrOutputParser()
+                | output_parser
             )
             
             self.conversation_chain = RunnableParallel(
@@ -79,16 +109,19 @@ class RagPipeline:
                     input_variables=config['prompt']['input_variables_without_rag']
                 )
             chain = (
-                prompt_template | self.llm | StrOutputParser()
+                prompt_template | self.llm | output_parser
                 )
             self.conversation_chain = RunnableParallel(
                 {"question": RunnablePassthrough()}
             ).assign(answer=chain)
         
+        # if self.config['use_guardrails']:
+        #     self.conversation_chain = self.conversation_chain.with_types(output_type=dict)
+
         guardrails_config = RailsConfig.from_path(config['guardrails']['config_path'])
         self.guardrails = RunnableRails(guardrails_config)
 
-        self.chain_with_guardrails = self.guardrails | self.conversation_chain
+        self.chain_with_guardrails =  self.conversation_chain | self.guardrails
 
     @log_execution
     def init_LLM(self):
@@ -104,7 +137,7 @@ class RagPipeline:
                     "do_sample": self.config['llm']['do_sample'],
                     "return_full_text": self.config['llm']['return_full_text']
                 },
-                device=self.config['llm']['device'],
+                device_map=self.config['llm']['device_map'],
             )
         else:
             self.llm = HuggingFaceEndpoint(
@@ -115,6 +148,7 @@ class RagPipeline:
 
     @log_execution
     def load_context_metadata(self):
+        csv.field_size_limit(10**6)
         loader = CSVLoader(
             file_path=self.config['context_loader']['file_path'], 
             csv_args=self.config['context_loader']['csv_args'],
@@ -124,19 +158,18 @@ class RagPipeline:
 
     @log_execution
     def create_vectordb(self):
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=self.config['vectordb']['splitter']['chunk_size'], 
-            chunk_overlap=self.config['vectordb']['splitter']['chunk_overlap']
-        )
-        docs = splitter.split_documents(self.data)
-
         embedding_function = HuggingFaceEmbeddings(
             model_name=self.config['vectordb']['embedding_function']['model_name'],
             model_kwargs=self.config['vectordb']['embedding_function']['model_kwargs']
         )
-
         if self.config['vectordb']['create_new_collection']:
             print("Creating new collection ...")
+            splitter = RecursiveCharacterTextSplitter(
+                chunk_size=self.config['vectordb']['splitter']['chunk_size'], 
+                chunk_overlap=self.config['vectordb']['splitter']['chunk_overlap']
+            )
+            docs = splitter.split_documents(self.data)
+
             self.qdrant_collection = Qdrant.from_documents(
                 docs,
                 embedding_function,

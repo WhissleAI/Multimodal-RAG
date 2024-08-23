@@ -28,7 +28,6 @@ def rag_and_eval():
             batch = zip(batch[0], batch[1])
             for question, ground_truth in batch:
                 if not config['use_guardrails']:
-                    import pdb; pdb.set_trace()
                     result = conversational_chain.conversation_chain.invoke(question)
                 else:
                     result = conversational_chain.chain_with_guardrails.invoke(question)
@@ -53,7 +52,7 @@ def rag_and_eval():
                 print(data)
 
                 eval_dataset = Dataset.from_dict(data)
-                asyncio.run(aeval(eval_dataset, config, outpath))
+                aeval(eval_dataset, config, outpath)
                 
             output_filename = f"{outpath}/result.json"
             with open(output_filename, 'w') as f:

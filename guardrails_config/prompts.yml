@@ -13,15 +13,15 @@ prompts:
 
         --
         QUESTION (THIS DOES NOT COUNT AS BACKGROUND INFORMATION):
-        {{ user_input }}
+        {{ question }}
 
         --
         DOCUMENT:
-        {{ provided_context }}
+        {{ context }}
 
         --
         ANSWER:
-        {{ bot_response }}
+        {{ answer }}
 
         --
 
