@@ -10,6 +10,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from utils import log_execution
 from langchain_huggingface import HuggingFaceEndpoint
+from langchain.retrievers import EnsembleRetriever
 
 from langchain.output_parsers import GuardrailsOutputParser
 # from langserve.client import RemoteRunnable
@@ -148,13 +149,14 @@ class RagPipeline:
 
     @log_execution
     def load_context_metadata(self):
-        csv.field_size_limit(10**6)
-        loader = CSVLoader(
-            file_path=self.config['context_loader']['file_path'], 
-            csv_args=self.config['context_loader']['csv_args'],
-            metadata_columns = self.config['context_loader']['metadata_columns']
-        )
-        self.data = loader.load()
+        if self.config['vectordb']['create_new_collection']:
+            csv.field_size_limit(10**6)
+            loader = CSVLoader(
+                file_path=self.config['context_loader']['file_path'], 
+                csv_args=self.config['context_loader']['csv_args'],
+                metadata_columns = self.config['context_loader']['metadata_columns']
+            )
+            self.data = loader.load()
 
     @log_execution
     def create_vectordb(self):
@@ -178,11 +180,23 @@ class RagPipeline:
             )
         else:
             print("Using existing collection ...")
-            self.qdrant_collection = Qdrant.from_existing_collection(
-                collection_name=self.config['vectordb']['qdrant']['collection_name'],
-                embedding=embedding_function,
-                path=self.config['vectordb']['qdrant']['path']
-            )
+            if self.config['vectordb']['qdrant']['use_12_month']:
+                self.retrievers = []
+                for i, collection_name in enumerate(self.config['vectordb']['qdrant']['collection_name']):
+                    qdrant_collection = Qdrant.from_existing_collection(
+                        collection_name=collection_name,
+                        embedding=embedding_function,
+                        path=self.config['vectordb']['qdrant']['path'][i],
+                    )
+                    self.retrievers.append(qdrant_collection.as_retriever())
+                self.retriever = EnsembleRetriever(retrievers=self.retrievers)
 
-        self.retriever = self.qdrant_collection.as_retriever()
+            else:
+                self.qdrant_collection = Qdrant.from_existing_collection(
+                    collection_name=self.config['vectordb']['qdrant']['collection_name'],
+                    embedding=embedding_function,
+                    path=self.config['vectordb']['qdrant']['path']
+                )
+
+                self.retriever = self.qdrant_collection.as_retriever()
         torch.cuda.empty_cache()

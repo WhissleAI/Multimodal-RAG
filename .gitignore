@@ -19,7 +19,6 @@ data/context_metadata/eng_context_metadata/2016_09_english.csv
 data/context_metadata/eng_context_metadata/2016_10_english.csv
 data/context_metadata/eng_context_metadata/2016_11_english.csv
 data/context_metadata/eng_context_metadata/2016_12_english.csv
-scripts/*
 data/vectordb/*
 data/context_metadata/processed_eng_context_metadata/processed_2016_03_english.csv
 data/context_metadata/processed_eng_context_metadata/processed_2016_04_english.csv

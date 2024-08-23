@@ -21,8 +21,35 @@ vectordb:
     model_kwargs:
       device: 0
   qdrant:
+    use_12_month: false
     path: "./data/vectordb"
     collection_name: "resumes"
+    path_12:
+      - "./data/db_english_2016_01"
+      - "./data/db_english_2016_02"
+      - "./data/db_english_2016_03"
+      - "./data/db_english_2016_04"
+      - "./data/db_english_2016_05"
+      - "./data/db_english_2016_06"
+      - "./data/db_english_2016_07"
+      - "./data/db_english_2016_08"
+      - "./data/db_english_2016_09"
+      - "./data/db_english_2016_10"
+      - "./data/db_english_2016_11"
+      - "./data/db_english_2016_12"
+    collection_name_12: 
+      - "english_2016_01"
+      - "english_2016_02"
+      - "english_2016_03"
+      - "english_2016_04"
+      - "english_2016_05"
+      - "english_2016_06"
+      - "english_2016_07"
+      - "english_2016_08"
+      - "english_2016_09"
+      - "english_2016_10"
+      - "english_2016_11"
+      - "english_2016_12"
 
 context_loader:
   type: "CSVLoader"
