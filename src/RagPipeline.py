@@ -182,7 +182,7 @@ class RagPipeline:
             print("Using existing collection ...")
             if self.config['vectordb']['qdrant']['use_12_month']:
                 self.retrievers = []
-                import pdb; pdb.set_trace()
+                # import pdb; pdb.set_trace()
                 for i, collection_name in enumerate(self.config['vectordb']['qdrant']['collection_name_12']):
                     qdrant_collection = Qdrant.from_existing_collection(
                         collection_name=collection_name,
@@ -190,6 +190,7 @@ class RagPipeline:
                         path=self.config['vectordb']['qdrant']['path_12'][i],
                     )
                     self.retrievers.append(qdrant_collection.as_retriever())
+                    print(len(self.retrievers))
                 self.retriever = EnsembleRetriever(retrievers=self.retrievers)
 
             else:
