@@ -31,3 +31,5 @@ data/context_metadata/processed_eng_context_metadata/processed_2016_10_english.c
 data/context_metadata/processed_eng_context_metadata/processed_2016_11_english.csv
 data/context_metadata/processed_eng_context_metadata/processed_2016_12_english.csv
 data/*
+scripts/*
+scripts/data_download.sh
