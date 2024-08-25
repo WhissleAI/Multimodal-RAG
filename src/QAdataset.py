@@ -1,9 +1,9 @@
 from torch.utils.data import Dataset
 
 class QuestionsDataset(Dataset):
-    def __init__(self, json_data):
-        self.questions = json_data['question']
-        self.ground_truth = json_data['ground_truth']
+    def __init__(self, json_data, datasize):
+        self.questions = json_data['question'][:datasize]
+        self.ground_truth = json_data['ground_truth'][:datasize]
         self.question_ground_truth = [pair for pair in zip(self.questions, self.ground_truth)]
 
     def __len__(self):

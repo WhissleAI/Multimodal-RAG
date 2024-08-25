@@ -28,8 +28,6 @@ class RagPipeline:
         self.config = config
         self.repo_id = config['llm']['model_id']
         self.token = os.getenv('HUGGINGFACEHUB_API_TOKEN')
-        self.context_metadata_filename = config['context_loader']['file_path']
-        self.collection_name = config['vectordb']['qdrant']['collection_name']
 
         if self.config['use_guardrails']:
             rail_str = """
@@ -79,7 +77,8 @@ class RagPipeline:
                 )
             
             def format_docs(docs):
-                return "\n\n".join(doc.page_content for doc in docs)
+                context_size = config['context_size']
+                return "\n\n".join(doc.page_content for doc in docs[:context_size])
             
             rag_chain_from_docs = (
                 RunnablePassthrough.assign(context=(lambda x: format_docs(x["context"])))
@@ -119,10 +118,10 @@ class RagPipeline:
         # if self.config['use_guardrails']:
         #     self.conversation_chain = self.conversation_chain.with_types(output_type=dict)
 
-        guardrails_config = RailsConfig.from_path(config['guardrails']['config_path'])
-        self.guardrails = RunnableRails(guardrails_config)
+        # guardrails_config = RailsConfig.from_path(config['guardrails']['config_path'])
+        # self.guardrails = RunnableRails(guardrails_config)
 
-        self.chain_with_guardrails =  self.conversation_chain | self.guardrails
+        # self.chain_with_guardrails =  self.conversation_chain | self.guardrails
 
     @log_execution
     def init_LLM(self):
@@ -190,7 +189,6 @@ class RagPipeline:
                         path=self.config['vectordb']['qdrant']['path_12'][i],
                     )
                     self.retrievers.append(qdrant_collection.as_retriever())
-                    print(len(self.retrievers))
                 self.retriever = EnsembleRetriever(retrievers=self.retrievers)
 
             else:

@@ -29,10 +29,12 @@ def rag_and_eval():
             for question, ground_truth in batch:
                 if not config['use_guardrails']:
                     result = conversational_chain.conversation_chain.invoke(question)
+                    import pdb; pdb.set_trace()
                 else:
                     result = conversational_chain.chain_with_guardrails.invoke(question)
                 if config['use_rag']:
-                    context = [doc.page_content for doc in result['context']]        
+                    context_size = config['context_size']
+                    context = [doc.page_content for doc in result['context'][:context_size]]        
                 else:
                     context = [""]
                 collected_data['contexts'].append(context)
@@ -77,7 +79,8 @@ if __name__ == "__main__":
     with open(config['dataset']['file']) as f:
         json_data = json.load(f)
 
-    dataset = QuestionsDataset(json_data)
+    datasize = config['dataset']['size']
+    dataset = QuestionsDataset(json_data, datasize)
     data_loader = DataLoader(dataset, batch_size=config['dataloader']['batch_size'], shuffle=config['dataloader']['shuffle'])
 
 
