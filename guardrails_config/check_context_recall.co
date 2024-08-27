@@ -1,0 +1,9 @@
+define bot not enough context
+  "I'm sorry. I didn't retrieve enough context related to the question."
+
+define subflow check context recall
+  $is_blocked = execute check_context_recall
+
+  if $is_blocked
+    bot not enough context
+    stop
