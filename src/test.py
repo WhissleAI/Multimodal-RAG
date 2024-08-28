@@ -1,22 +1,23 @@
 from nemoguardrails import RailsConfig, LLMRails
-from datasets import Dataset
 
-config = RailsConfig.from_path("../guardrails_config")
+
+config = RailsConfig.from_path("/home/yfg2/Multimodal-RAG/guardrails_config")
 rails = LLMRails(config)
 
-dataset = Dataset.from_dict({"questions": ["How many vacation days do I have per year?"],
-                             "answers": ["You have 25 vacation days per year."],
-                             "contexts": ["You have 25 vacation days per year."],
-                             "ground_truths": ["You have 25 vacation days per year."]})
+
 
 
 response = rails.generate(messages=[{
     "role": "context",
     "content": {
-        "eval_dataset": dataset
+        "question": "How many vacation days do I have per year?",
+        "answer": "You have 25 vacation days per year.",
+        "contexts": ["You have 25 vacation days per year."],
+        "ground_truth": "You have 25 vacation days per year."
     }},
     {"role": "user",
-    "content": "How many vacation days do I have per year?"
+     "content": "How many vacation days do I have per year?"
     }
 ])
+import pdb; pdb.set_trace()
 print(response["content"])

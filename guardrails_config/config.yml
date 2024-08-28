@@ -1,9 +1,14 @@
+# models:
+#   - type: main
+#     engine: huggingface_hub
+#     model: microsoft/Phi-3-mini-4k-instruct
+#     parameters:
+#       repo_id: "microsoft/Phi-3-mini-4k-instruct"
+
 models:
-  - type: main
-    engine: huggingface_hub
-    model: microsoft/Phi-3-mini-4k-instruct
-    parameters:
-      repo_id: "microsoft/Phi-3-mini-4k-instruct"
+ - type: main
+   engine: openai
+   model: gpt-3.5-turbo-instruct
 
 rails:
   input:
